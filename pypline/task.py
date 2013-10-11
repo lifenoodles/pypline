@@ -4,7 +4,7 @@ class Task(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def __call__(self, memory):
+    def __call__(self, message, pipeline):
         raise NotImplementedError
 
 
@@ -12,11 +12,11 @@ class ParameterisedMixin(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def parameter_list(self):
+    def parameter_list(self, message, pipeline):
         raise NotImplementedError
 
 
-class MemoryUnitsMixin():
+class BundleMixin(object):
     __metaclass__ = abc.ABCMeta
 
     def requires(self):
@@ -28,24 +28,19 @@ class MemoryUnitsMixin():
 
 class Parameter(object):
     """
-    >>> p = Parameter(int, "Name")
-    >>> p.is_ok(2)
+    >>> Parameter(int, "Name").is_ok(2)
     True
-    >>> p.is_ok(3.4)
-    True
-    >>> p.is_ok("Hi")
+    >>> Parameter(str, "Name").is_ok(3)
     False
+    >>> Parameter(float, "Name").is_ok(2.2)
+    True
     """
-    def __init__(self, typ, name):
-        self.type = typ
+    def __init__(self, cls, name):
+        self.cls = cls
         self.name = name
 
     def is_ok(self, param):
-        try:
-            self.type(param)
-            return True
-        except:
-            return False
+        return issubclass(param.__class__, self.cls)
 
 
 if __name__ == "__main__":
