@@ -1,16 +1,32 @@
-class PipeController:
-    INSTRUCTION_CONTINUE = "continue"
-    INSTRUCTION_STOP = "stop"
+from task import BundleMixin
 
-    def get_instruction(self, memory):
-        return PipeController.INSTRUCTION_CONTINUE
 
-class Pipeline:
-    def __init__(self, controller=PipeController()):
-        self.__controller = controller
-        self.__operators = []
-        self.__memory = dict()
+class PipeController():
+    def done(self, message):
+        return True
+
+
+class BundlePipeController(PipeController, BundleMixin):
+    def done(self, message):
+        return True
+
+
+class Pipeline(object):
+    def __init__(self, message, tasks=[]):
+        self.message = message
+        self.__tasks = tasks
+
+    def validate(self):
+        return all([callable(t) for t in self.__tasks])
 
     def execute(self):
-        for operator in self.__operators:
-            operator.execute(self.__memory)
+        if not self.validate():
+            raise TypeError("Pipeline failed to validate, " \
+                " all Tasks must be Callable")
+        for task in self.__tasks:
+            task(self.message, self)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
