@@ -1,14 +1,17 @@
 from task import BundleMixin
+import abc
 
 
 class PipeController():
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
     def done(self, message):
-        return True
+        raise NotImplementedError
 
 
 class BundlePipeController(PipeController, BundleMixin):
-    def done(self, message):
-        return True
+    pass
 
 
 class Pipeline(object):
@@ -24,6 +27,17 @@ class Pipeline(object):
     def execute(self, message):
         for task in self.__tasks:
             task(message, self)
+
+
+class RepeatingPipeline(Pipeline):
+    def __init__(self, controller=PipeController(), tasks=[]):
+        Pipeline.__init__(self, tasks)
+        self.controller = controller
+
+    def execute(self, message):
+        while not self.controller.done():
+            for task in self.__tasks:
+                task(message, self)
 
 
 class ModifiableMixin(object):
