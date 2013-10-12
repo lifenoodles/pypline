@@ -36,6 +36,26 @@ class Pipeline(object):
             task(message, self)
 
 
+class ModifiableMixin(object):
+    def add_task(self, task):
+        self.__tasks.append(task)
+
+    def add_task_after(self, task, cls):
+        index = next(i for (i, x) in enumerate(self.__tasks)
+            if x.__class__ == cls)
+        self.__tasks.insert(task, index + 1)
+
+    def add_task_before(self, task, cls):
+        index = next(i for (i, x) in enumerate(self.__tasks)
+            if x.__class__ == cls)
+        self.__tasks.insert(task, index)
+
+    def remove_task(self, cls):
+        index = next(i for (i, x) in enumerate(self.__tasks)
+            if x.__class__ == cls)
+        self.__tasks = self.__tasks[:index] + self.__tasks[index + 1:]
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
