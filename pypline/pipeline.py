@@ -2,6 +2,19 @@ from task import BundleMixin
 import abc
 
 
+class PipelineAdvancer(object):
+    def __init__(self, pipeline, tasks):
+        self.__pipeline = pipeline
+        self.__iterator = iter(tasks)
+        self.message = None
+
+    def __call__(self, message):
+        self.message = message
+        try:
+            return next(self.__iterator)(message, self, self.__pipeline)
+        except StopIteration:
+            pass
+
 class PipeController():
     __metaclass__ = abc.ABCMeta
 
@@ -15,22 +28,23 @@ class BundlePipeController(PipeController, BundleMixin):
 
 
 class Pipeline(object):
-    def __init__(self, tasks=[]):
+    def __init__(self, *tasks):
         self.__tasks = tasks
         self.__validate()
 
     def __validate(self):
         if not all([callable(t) for t in self.__tasks]):
             raise TypeError("Pipeline failed to validate, " \
-                " all Tasks must be Callable")
+                "all Tasks must be Callable")
 
     def execute(self, message):
-        for task in self.__tasks:
-            task(message, self)
+        advancer = PipelineAdvancer(self, self.__tasks)
+        advancer(message)
+        return advancer.message
 
 
 class RepeatingPipeline(Pipeline):
-    def __init__(self, controller=PipeController(), tasks=[]):
+    def __init__(self, controller=None, tasks=[]):
         Pipeline.__init__(self, tasks)
         self.controller = controller
 

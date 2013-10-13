@@ -4,7 +4,7 @@ class Task(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def __call__(self, message, pipeline):
+    def __call__(self, message, resume, pipeline):
         raise NotImplementedError
 
 
@@ -12,7 +12,7 @@ class ParameterisedMixin(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def parameter_list(self, message, pipeline):
+    def parameter_list(self):
         raise NotImplementedError
 
 
