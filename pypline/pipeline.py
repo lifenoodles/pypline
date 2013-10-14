@@ -1,4 +1,5 @@
-from task import BundleMixin
+from task import BundleMixin, AsyncTask
+from threading import Event, Thread
 import abc
 
 
@@ -33,49 +34,46 @@ class ModifiableMixin(object):
 
 
 class PipelineAdvancer(object):
-    def __init__(self, tasks, callback=None):
+    def __init__(self, tasks):
+        super(PipelineAdvancer, self).__init__()
         self._tasks = tasks
-        self._iterator = iter(self._tasks)
-        self._callback = callback
-        self.resume = self.__call__
-        self.message = None
+        self._event = Event()
 
-    def __call__(self, message):
+    def run(self, message):
+        return self.execute(message, self._tasks)
+
+    def execute(self, message, tasks):
         self.message = message
-        try:
-            return next(self._iterator)(message, self)
-        except StopIteration:
-            if callable(self._callback):
-                self._callback(message)
+        for task in iter(self._tasks):
+            if hasattr(task.__class__, "_async_flag"):
+                task(self.message, self, self.resume)
+                self._event.wait()
+            else:
+                self.message = task(self.message, self)
+        return self.message
+
+    def resume(self, message):
+        self.message = message
+        self._event.set()
 
 
 class RepeatingPipelineAdvancer(PipelineAdvancer):
     def __init__(self, controller, initialisers,
-                tasks, finalisers, callback=None):
-        PipelineAdvancer.__init__(self, tasks, callback)
+                tasks, finalisers):
+        super(RepeatingPipelineAdvancer, self).__init__(tasks)
         self._controller = controller
-        self._finaliser_pipe = PipelineAdvancer(finalisers, callback)
-        self._body_pipe = PipelineAdvancer(self._tasks,
-                self._finaliser_pipe)
-        self._initialiser_pipe = PipelineAdvancer(initialisers,
-                self._body_pipe)
+        self._initialisers = initialisers
+        self._finalisers = finalisers
 
-    def begin(self, message):
-        self._initialiser_pipe(message)
-        return self._finaliser_pipe.message
-
-    def __call__(self, message):
-        while not self._controller.done(message):
-            self.message = message
-            try:
-                return next(self._iterator)(message, self)
-            except StopIteration:
-                self._iterator = iter(self._tasks)
-                continue
-        self._finaliser_pipe(message)
+    def run(self, message):
+        message = self.execute(self.message, self._initialisers)
+        while not self._controller.done():
+            message = self.execute(self.message, self._tasks)
+        message = self.execute(self.message, self._finalisers)
+        return message
 
 
-class PipeController():
+class PipeController(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -88,9 +86,11 @@ class BundlePipeController(PipeController, BundleMixin):
 
 
 class AsyncMixin(object):
-    def execute(self, message, callback):
-        advancer = PipelineAdvancer(self, self._tasks, callback)
-        advancer(message)
+    def execute(self, callback, message=None):
+        def run_in_thread():
+            result = super(AsyncMixin, self).execute(message)
+            callback(result)
+        Thread(run_in_thread).start()
 
 
 class Pipeline(object):
@@ -99,14 +99,13 @@ class Pipeline(object):
         self._validate()
 
     def _validate(self):
-        if not all([callable(t) for t in self._tasks]):
-            raise TypeError("Pipeline failed to validate, " \
-                "all Tasks must be Callable")
+        for task in self._tasks:
+            if not callable(task):
+                raise TypeError("Task: %s is not callable" % task.__name__)
 
-    def execute(self, message):
+    def execute(self, message=None):
         advancer = PipelineAdvancer(self._tasks)
-        advancer(message)
-        return advancer.message
+        return advancer.run(message)
 
 
 class RepeatingPipeline(Pipeline):
@@ -117,12 +116,16 @@ class RepeatingPipeline(Pipeline):
         self._initialisers = initialisers
         self._finalisers = finalisers
 
-    def execute(self, message):
+    def _validate(self):
+        for task in self._initialisers + self._tasks + self._finalisers:
+            if not callable(task):
+                raise TypeError("Task: %s is not callable" % task.__name__)
+
+    def execute(self, message=None):
         advancer = RepeatingPipelineAdvancer(self._controller, \
                     self._initialisers[:], self._tasks[:], \
                     self._finalisers[:])
-        advancer.begin(message)
-        return advancer._finaliser_pipe.message
+        return advancer.run(message)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,16 @@ class Task(object):
         raise NotImplementedError
 
 
+class AsyncTask(Task):
+    __metaclass__ = abc.ABCMeta
+    # this makes me feel dirty
+    _async_flag = True
+
+    @abc.abstractmethod
+    def __call__(self, message, pipeline, callback):
+        raise NotImplementedError
+
+
 class ParameterisedMixin(object):
     __metaclass__ = abc.ABCMeta
 
