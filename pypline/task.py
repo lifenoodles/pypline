@@ -4,7 +4,7 @@ class Task(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def __call__(self, message, resume, pipeline):
+    def __call__(self, message, pipeline):
         raise NotImplementedError
 
 

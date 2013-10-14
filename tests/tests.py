@@ -1,22 +1,47 @@
 import sys
 sys.path.append("..")
-from pypline.pipeline import Pipeline
-from pypline.task import Task
+import pypline.pipeline
+reload(pypline.pipeline)
+from pypline.pipeline import Pipeline, PipeController, RepeatingPipeline
 
 
 if __name__ == "__main__":
-    def cap(message, resume, pipeline):
+    def cap(message, pipeline):
         assert type(message) == type("")
-        resume(message.capitalize())
+        pipeline.resume(message.capitalize())
 
-    def rev(message, resume, pipeline):
-        resume(message[-1::-1])
+    def rev(message, pipeline):
+        pipeline(message[-1::-1])
 
-    def wait(message, resume, pipeline):
+    def wait(message, pipeline):
         import time
-        time.sleep(1)
-        resume(message)
+        time.sleep(0)
+        pipeline(message)
 
-    pipe1 = Pipeline(rev, cap, rev, wait)
+    pipe1 = Pipeline([cap, rev, wait])
     y = pipe1.execute("hello")
+    print y
+
+    class LengthController(PipeController):
+        def done(self, message):
+            print "Controller: %s" % message
+            return len(message) > 10
+
+    def addLetter(message, pipeline):
+        import random, string
+        pipeline(message + random.choice(string.lowercase))
+
+
+    def init(message, pipeline):
+        print "INIT: %s" % message
+        pipeline(message)
+
+
+    def final(message, pipeline):
+        print "FINAL: %s" % message
+        pipeline(message)
+
+
+    pipe2 = RepeatingPipeline(LengthController(), [init], [addLetter], [final])
+    y = pipe2.execute("hello")
     print y
