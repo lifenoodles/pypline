@@ -3,9 +3,10 @@ import abc
 
 
 class PipelineAdvancer(object):
-    def __init__(self, pipeline, tasks):
+    def __init__(self, pipeline, tasks, callback=None):
         self.__pipeline = pipeline
-        self.__iterator = iter(tasks)
+        self.__iterator = iter(tasks[:])
+        self.__callback = callback
         self.message = None
 
     def __call__(self, message):
@@ -13,7 +14,9 @@ class PipelineAdvancer(object):
         try:
             return next(self.__iterator)(message, self, self.__pipeline)
         except StopIteration:
-            pass
+            if callable(self.__callback):
+                self.__callback(message)
+
 
 class PipeController():
     __metaclass__ = abc.ABCMeta
@@ -52,6 +55,12 @@ class RepeatingPipeline(Pipeline):
         while not self.controller.done():
             for task in self.__tasks:
                 task(message, self)
+
+
+class AsyncMixin(object):
+    def execute(self, message, callback):
+        advancer = PipelineAdvancer(self, self.__tasks, callback)
+        advancer(message)
 
 
 class ModifiableMixin(object):
