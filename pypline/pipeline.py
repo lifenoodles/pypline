@@ -66,11 +66,11 @@ class RepeatingPipelineAdvancer(PipelineAdvancer):
         self._finalisers = finalisers
 
     def run(self, message):
-        message = self.execute(self.message, self._initialisers)
-        while not self._controller.done():
-            message = self.execute(self.message, self._tasks)
-        message = self.execute(self.message, self._finalisers)
-        return message
+        self.message = self.execute(message, self._initialisers)
+        while not self._controller(self.message):
+            self.message = self.execute(self.message, self._tasks)
+        self.message = self.execute(self.message, self._finalisers)
+        return self.message
 
 
 class PipeController(object):
