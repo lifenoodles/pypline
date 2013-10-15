@@ -111,10 +111,10 @@ class Pipeline(object):
 class RepeatingPipeline(Pipeline):
     def __init__(self, controller=None,
                 initialisers=[], tasks=[], finalisers=[]):
-        Pipeline.__init__(self, tasks)
         self._controller = controller
         self._initialisers = initialisers
         self._finalisers = finalisers
+        Pipeline.__init__(self, tasks)
 
     def _validate(self):
         for task in self._initialisers + self._tasks + self._finalisers:
