@@ -77,7 +77,7 @@ class PipeController(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def done(self, message):
+    def __call__(self, message):
         raise NotImplementedError
 
 
