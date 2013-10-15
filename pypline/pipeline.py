@@ -44,7 +44,7 @@ class PipelineAdvancer(object):
 
     def execute(self, message, tasks):
         self.message = message
-        for task in iter(self._tasks):
+        for task in iter(tasks):
             if hasattr(task.__class__, "_async_flag"):
                 task(self.message, self, self.resume)
                 self._event.wait()
