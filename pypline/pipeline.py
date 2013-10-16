@@ -1,27 +1,29 @@
-from threading import Event, Thread
+import threading
 
 
 class ModifiableMixin(object):
+    def _is_match(self, task, cls):
+        return task == cls or (hasattr(task, "__class__") and
+                    task.__class__ == cls)
+
     def add_task(self, task):
         self._tasks.append(task)
 
     def add_task_after(self, task, cls):
-        try:
-            index = next(i for (i, x) in enumerate(self._tasks)
-                    if x.__class__ == cls)
-        except StopIteration:
-            raise ValueError("Class %s not found in pipeline."
-                    % cls.__name__)
-        self._tasks.insert(task, index + 1)
+        i = 0
+        while i < len(self._tasks):
+            if self._is_match(self[i], cls):
+                self._tasks.insert(i + 1)
+                i += 1
+            i += 1
 
     def add_task_before(self, task, cls):
-        try:
-            index = next(i for (i, x) in enumerate(self._tasks)
-                    if x.__class__ == cls)
-        except StopIteration:
-            raise ValueError("Class %s not found in pipeline."
-                    % cls.__name__)
-        self._tasks.insert(task, index)
+        i = 0
+        while i < len(self._tasks):
+            if self._is_match(self[i], cls):
+                self._tasks.insert(i)
+                i += 1
+            i += 1
 
     def remove_task(self, cls):
         while  True:
@@ -31,11 +33,11 @@ class ModifiableMixin(object):
                 break
 
 
-class PipelineRunner(object):
+class PipelineRunner(ModifiableMixin):
     def __init__(self, tasks):
         super(PipelineRunner, self).__init__()
         self._tasks = tasks
-        self._event = Event()
+        self._event = threading.Event()
 
     def run(self, message):
         return self.execute(message, self._tasks)
@@ -76,10 +78,10 @@ class AsyncMixin(object):
         def run_in_thread():
             result = super(AsyncMixin, self).execute(message)
             callback(result)
-        Thread(run_in_thread).start()
+        threading.Thread(run_in_thread).start()
 
 
-class Pipeline(object):
+class Pipeline(ModifiableMixin):
     def __init__(self, tasks=[]):
         self._tasks = tasks[:]
         self._validate()
@@ -117,3 +119,16 @@ class RepeatingPipeline(Pipeline):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+    import task
+    class MyStr(task.Task):
+        def __call__(self, message, pipe):
+            return str(message)
+
+    class MyInt(task.Task):
+        def __call__(self, message, pipe):
+            return int(message)
+
+    p = Pipeline([MyStr(), MyInt()])
+    p.add_task_after(MyStr(), MyInt)
+    print p.execute(1)

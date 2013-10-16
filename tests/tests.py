@@ -29,5 +29,17 @@ class TestPipeLine(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
     pass
+
+    class MyStr(pypline.Task):
+        def __call__(self, message, pipe):
+            return str(message)
+
+    class MyInt(pypline.Task):
+        def __call__(self, message, pipe):
+            return int(message)
+
+    p = pypline.Pipeline([MyStr(), MyInt()])
+    p.add_task_after(MyStr(), MyInt)
+    print p.execute(1)
