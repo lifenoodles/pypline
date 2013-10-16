@@ -1,6 +1,6 @@
 import sys
 sys.path.append("..")
-from pypline import pipeline, task
+import pypline
 
 class GaSolution(object):
     def __init__(self, genes=[]):
@@ -18,16 +18,16 @@ class StringGaData(object):
         self.generation = 0
 
 
-class GaController(pipeline.PipeController):
+class GaController(pypline.Task):
     def __call__(self, data):
         data.generation += 1
         if data.best is not None:
             return "".join(data.best.genes) == data.target \
-                    or data.generation > 100
+                    or data.generation > 300
         return False
 
 
-class GaInitialiser(task.Task):
+class GaInitialiser(pypline.Task):
     def __init__(self, target, size):
         self.target = target
         self.size = size
@@ -40,6 +40,7 @@ class GaInitialiser(task.Task):
             new_genes = [random.choice(genes) for
                     x in range(len(ga_data.target))]
             ga_data.population.append(GaSolution(new_genes))
+        ga_data.best = ga_data.population[0]
         return ga_data
 
 
@@ -50,7 +51,8 @@ def evaluate(data, pipeline):
             if gene != data.target[i]:
                 fitness += 1
         solution.fitness = fitness
-        data.best = max(data.population, key=lambda x: x.fitness)
+        best = max(data.population, key=lambda x: x.fitness)
+        data.best = best.fitness > data.best.fitness and best or data.best
     return data
 
 
@@ -75,7 +77,8 @@ def crossover(data, pipeline):
     assert size == len(data.population)
     return data
 
-class GaMutator(task.Task):
+
+class GaMutator(pypline.Task):
     def __init__(self, mutation_rate):
         self.mutation_rate = mutation_rate
 
@@ -86,24 +89,26 @@ class GaMutator(task.Task):
                 solution.genes[random.randint(0, len(solution.genes) - 1)] = random.choice(data.allowed_genes)
         return data
 
-class GaLogger(task.Task):
+
+class GaLogger(pypline.Task):
     def __init__(self, file_to_use):
         self.file = file_to_use
 
     def __call__(self, data, pipeline):
         with open(self.file, "a") as f:
             f.write("%s\n" % "".join(data.best.genes))
+            print "%s" % "".join(data.best.genes)
         return data
 
 if __name__ == "__main__":
     #contruct pipeline
     controller = GaController()
-    initialiser = GaInitialiser("this is a sample string", 100)
+    initialiser = GaInitialiser("this is a sample string", 200)
     mutator = GaMutator(0.1)
     open("logfile", "w").close()
     logger = GaLogger("logfile")
 
-    ga = pipeline.RepeatingPipeline(controller,
+    ga = pypline.RepeatingPipeline(controller,
             [initialiser],
             [evaluate, crossover, mutator, logger])
     ga.execute()
