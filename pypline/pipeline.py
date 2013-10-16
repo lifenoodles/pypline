@@ -1,6 +1,4 @@
-from task import BundleMixin, AsyncTask
 from threading import Event, Thread
-import abc
 
 
 class ModifiableMixin(object):
@@ -33,9 +31,9 @@ class ModifiableMixin(object):
                 break
 
 
-class PipelineAdvancer(object):
+class PipelineRunner(object):
     def __init__(self, tasks):
-        super(PipelineAdvancer, self).__init__()
+        super(PipelineRunner, self).__init__()
         self._tasks = tasks
         self._event = Event()
 
@@ -57,10 +55,10 @@ class PipelineAdvancer(object):
         self._event.set()
 
 
-class RepeatingPipelineAdvancer(PipelineAdvancer):
+class RepeatingPipelineRunner(PipelineRunner):
     def __init__(self, controller, initialisers,
                 tasks, finalisers):
-        super(RepeatingPipelineAdvancer, self).__init__(tasks)
+        super(RepeatingPipelineRunner, self).__init__(tasks)
         self._controller = controller
         self._initialisers = initialisers
         self._finalisers = finalisers
@@ -71,18 +69,6 @@ class RepeatingPipelineAdvancer(PipelineAdvancer):
             self.message = self.execute(self.message, self._tasks)
         self.message = self.execute(self.message, self._finalisers)
         return self.message
-
-
-class PipeController(object):
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def __call__(self, message):
-        raise NotImplementedError
-
-
-class BundlePipeController(PipeController, BundleMixin):
-    pass
 
 
 class AsyncMixin(object):
@@ -101,10 +87,10 @@ class Pipeline(object):
     def _validate(self):
         for task in self._tasks:
             if not callable(task):
-                raise TypeError("Task: %s is not callable" % task.__name__)
+                raise TypeError("Task: %s is not callable" % str(task))
 
     def execute(self, message=None):
-        advancer = PipelineAdvancer(self._tasks)
+        advancer = PipelineRunner(self._tasks)
         return advancer.run(message)
 
 
@@ -119,10 +105,10 @@ class RepeatingPipeline(Pipeline):
     def _validate(self):
         for task in self._initialisers + self._tasks + self._finalisers:
             if not callable(task):
-                raise TypeError("Task: %s is not callable" % task.__name__)
+                raise TypeError("Task: %s is not callable" % str(task))
 
     def execute(self, message=None):
-        advancer = RepeatingPipelineAdvancer(self._controller, \
+        advancer = RepeatingPipelineRunner(self._controller, \
                     self._initialisers[:], self._tasks[:], \
                     self._finalisers[:])
         return advancer.run(message)
