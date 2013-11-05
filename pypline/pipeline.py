@@ -8,22 +8,19 @@ class ModifiableMixin(object):
 
     def add_task(self, task):
         self._tasks.append(task)
+        return self
 
-    def add_task_after(self, task, cls):
-        i = 0
-        while i < len(self._tasks):
-            if self._is_match(self[i], cls):
-                self._tasks.insert(i + 1)
-                i += 1
-            i += 1
+    def add_task_after(self, new_task, cls):
+        for i, task in enumerate(self._tasks):
+            if self._is_match(task, cls):
+                self._tasks.insert(i + 1, new_task)
+                return self
 
-    def add_task_before(self, task, cls):
-        i = 0
-        while i < len(self._tasks):
-            if self._is_match(self[i], cls):
-                self._tasks.insert(i)
-                i += 1
-            i += 1
+    def add_task_before(self, new_task, cls):
+        for i, task in enumerate(self._tasks):
+            if self._is_match(task, cls):
+                self._tasks.insert(i, new_task)
+                return self
 
     def remove_task(self, cls):
         while  True:
@@ -38,6 +35,9 @@ class PipelineRunner(ModifiableMixin):
         super(PipelineRunner, self).__init__()
         self._tasks = tasks
         self._event = threading.Event()
+        for task in self._tasks:
+            if hasattr(task.__class__, "_async_flag"):
+                self.execute = self.execute_async
 
     def run(self, message):
         return self.execute(message, self._tasks)
@@ -92,8 +92,8 @@ class Pipeline(ModifiableMixin):
                 raise TypeError("Task: %s is not callable" % str(task))
 
     def execute(self, message=None):
-        advancer = PipelineRunner(self._tasks)
-        return advancer.run(message)
+        runner = PipelineRunner(self._tasks)
+        return runner.run(message)
 
 
 class RepeatingPipeline(Pipeline):
@@ -110,10 +110,10 @@ class RepeatingPipeline(Pipeline):
                 raise TypeError("Task: %s is not callable" % str(task))
 
     def execute(self, message=None):
-        advancer = RepeatingPipelineRunner(self._controller, \
+        runner = RepeatingPipelineRunner(self._controller, \
                     self._initialisers[:], self._tasks[:], \
                     self._finalisers[:])
-        return advancer.run(message)
+        return runner.run(message)
 
 
 if __name__ == "__main__":
@@ -129,6 +129,9 @@ if __name__ == "__main__":
         def __call__(self, message, pipe):
             return int(message)
 
-    p = Pipeline([MyStr(), MyInt()])
-    p.add_task_after(MyStr(), MyInt)
-    print p.execute(1)
+    def double(message, pipe):
+        return message * 2
+
+    p = Pipeline([MyStr(), MyInt(), double])
+    p.add_task_after(double, double)
+    assert p.execute(1) == 4
