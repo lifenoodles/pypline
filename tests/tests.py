@@ -24,7 +24,7 @@ class ControllerN(pypline.Task):
 
 
 class GenericTask(pypline.Task):
-    def __init__(self, number):
+    def __init__(self, number=0):
         self.number = number;
 
     def process(self, message, pipeline):
@@ -68,6 +68,16 @@ class TestPipeLine(unittest.TestCase):
                 [Finaliser()])
         self.assertTrue(p.execute() == "INIT\nTASK 1\nTASK 2\nTASK 1\n" \
                 "TASK 2\nTASK 1\nTASK 2\nFINAL\n")
+
+
+class TestPipeLineManager(unittest.TestCase):
+    def test_create(self):
+        manager = pypline.PipeLineManager()
+        manager.register_task(GenericTask)
+        p = manager.build_pipeline(("GenericTask", [1]), \
+                ("GenericTask", [2]))
+        print p.execute("")
+
 
 if __name__ == "__main__":
     unittest.main()
