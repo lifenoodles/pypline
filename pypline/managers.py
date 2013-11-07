@@ -1,15 +1,50 @@
 import collections
 import pipeline
 import re
+import types
+
+
+def extract_class(cls):
+    match = re.search("__\.(.*)'", str(cls))
+    if match is None or len(match.groups()) != 1:
+        raise TypeError ("%s is not a class!" % cls)
+    return match.groups()[0]
 
 
 class NoRegisteredBuilderException(Exception): pass
 
 
-class PipelineDefinition(object):
-    def __init__(self, name, tasks):
+class PipelineConfiguration(collections.defaultdict):
+    def __init__(self, *args):
+        super(PipelineConfiguration, self).__init__(list)
+        for k, v in args:
+            self[k] = v
+
+    def __setitem__(self, k, v):
+        if type(v) != types.ListType:
+            v = [v]
+        super(PipelineConfiguration, self).__setitem__(k, v)
+
+
+class PipelineBuilder(object):
+    def __init__(self, name, task_builders):
         self.name = name
-        self.task_builders = tasks[:]
+        self._task_builders = []
+        self._task_names = []
+        for task in task_builders:
+            if type(task) == types.TupleType:
+                self._task_builders.append(task[0])
+                self._task_names.append(task[1])
+            else:
+                self._task_builders.append(task)
+                self._task_names.append(extract_class(task))
+
+    def build(self, configuration):
+        tasklist = []
+        for task, key in zip(self._task_builders, self._task_names):
+            args = configuration[key]
+            tasklist.append(task(*args))
+        return pipeline.Pipeline(tasklist)
 
 
 class RepeatingPipelineDefinition(object):
@@ -41,18 +76,12 @@ class PipeLineManager(object):
             raise NoRegisteredBuilderException("No registered "
                     "builder with the name: %s" % key)
 
-    def _extract_class(self, cls):
-        match = re.search("__\.(.*)'", str(cls))
-        if match is None or len(match.groups()) != 1:
-            raise TypeError ("%s is not a class!" % cls)
-        return match.groups()[0]
-
     def add_pipeline(self, pipeline):
         self._pipelines.append(pipeline)
         return self
 
     def register_task(self, builder):
-        builder_name = self._extract_class(builder)
+        builder_name = extract_class(builder)
         self.task_builders[builder_name] = builder
         return self
 

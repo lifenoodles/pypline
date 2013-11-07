@@ -2,6 +2,7 @@ import unittest
 import sys
 sys.path.append("..")
 import pypline
+from pypline import managers
 
 
 class Initialiser(pypline.Task):
@@ -28,7 +29,7 @@ class GenericTask(pypline.Task):
         self.number = number;
 
     def process(self, message, pipeline):
-        return message + "TASK %d\n" % self.number
+        return message + "TASK %s\n" % self.number
 
 
 class Cap(pypline.Task):
@@ -70,13 +71,23 @@ class TestPipeLine(unittest.TestCase):
                 "TASK 2\nTASK 1\nTASK 2\nFINAL\n")
 
 
+class TestPipelineBuilder(unittest.TestCase):
+    def test_empty(self):
+        b = managers.PipelineBuilder("SamplePipe", \
+                [(GenericTask, "task1"), GenericTask])
+        conf = managers.PipelineConfiguration(("GenericTask", 2))
+        conf["task1"] = [1]
+        p = b.build(conf)
+        self.assertTrue(p.execute("") == "TASK 1\nTASK 2\n")
+
+
 class TestPipeLineManager(unittest.TestCase):
     def test_create(self):
         manager = pypline.PipeLineManager()
         manager.register_task(GenericTask)
         p = manager.build_pipeline(("GenericTask", [1]), \
                 ("GenericTask", [2]))
-        print p.execute("")
+        self.assertTrue(p.execute("") == "TASK 1\nTASK 2\n")
 
 
 if __name__ == "__main__":
