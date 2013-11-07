@@ -30,5 +30,17 @@ class ModuleTaskImporter(TaskImporter):
         return self
 
 
+class ManagerImporter(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def import_manager(self):
+        raise NotImplementedError
+
+
+class PythonManagerImporter(ManagerImporter):
+    pass
+
+
 if __name__ == "__main__":
     print ModuleTaskImporter().import_tasks("task").tasks

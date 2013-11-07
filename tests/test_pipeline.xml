@@ -1,0 +1,36 @@
+<document>
+    <modules>
+        <file>test_modules.py</file>
+    </modules>
+    <pipelines>
+        <pipeline name="TestPipeline">
+            <controller>
+                <task name="TestController">
+                    <params>3</params>
+                </task>
+            </controller>
+            <initialisers>
+                <task name="TestInitialiser">
+                    <params>"PASS 1"</params>
+                    <params>"PASS 2"</params>
+                </task>
+            </initialisers>
+            <tasks>
+                <task name="TestTask">
+                    <params>"FIRST"</params>
+                    <params>"I"</params>
+                </task>
+                <task name="TestTask">
+                    <params>"SECOND"</params>
+                    <params>"II"</params>
+                </task>
+            </tasks>
+            <finalisers>
+                <task name="TestFinaliser">
+                    <params>"PASS 1"</params>
+                    <params>"PASS 2"</params>
+                </task>
+            </finalisers>
+        </pipeline>
+    </pipelines>
+</document>
