@@ -33,11 +33,8 @@ class ModifiableMixin(object):
 class PipelineRunner(ModifiableMixin):
     def __init__(self, tasks):
         super(PipelineRunner, self).__init__()
-        self._tasks = tasks
+        self._tasks = tasks[:]
         self._event = threading.Event()
-        for task in self._tasks:
-            if hasattr(task.__class__, "_async_flag"):
-                self.execute = self.execute_async
 
     def run(self, message):
         return self.execute(message, self._tasks)
@@ -46,10 +43,10 @@ class PipelineRunner(ModifiableMixin):
         self.message = message
         for task in iter(tasks):
             if hasattr(task.__class__, "_async_flag"):
-                task(self.message, self, self.resume)
+                task.process(self.message, self, self.resume)
                 self._event.wait()
             else:
-                self.message = task(self.message, self)
+                self.message = task.process(self.message, self)
         return self.message
 
     def resume(self, message):
@@ -62,8 +59,8 @@ class RepeatingPipelineRunner(PipelineRunner):
                 tasks, finalisers):
         super(RepeatingPipelineRunner, self).__init__(tasks)
         self._controller = controller
-        self._initialisers = initialisers
-        self._finalisers = finalisers
+        self._initialisers = initialisers[:]
+        self._finalisers = finalisers[:]
 
     def run(self, message):
         self.message = self.execute(message, self._initialisers)
@@ -84,12 +81,13 @@ class AsyncMixin(object):
 class Pipeline(ModifiableMixin):
     def __init__(self, tasks=[]):
         self._tasks = tasks[:]
-        self._validate()
+        self._validate(self._tasks)
 
-    def _validate(self):
-        for task in self._tasks:
-            if not callable(task):
-                raise TypeError("Task: %s is not callable" % str(task))
+    def _validate(self, tasks):
+        for task in tasks:
+            if not hasattr(task, "process"):
+                raise TypeError("Task: %s has no attribute 'process'" \
+                        % str(task))
 
     def execute(self, message=None):
         runner = PipelineRunner(self._tasks)
@@ -99,15 +97,12 @@ class Pipeline(ModifiableMixin):
 class RepeatingPipeline(Pipeline):
     def __init__(self, controller=None,
                 initialisers=[], tasks=[], finalisers=[]):
+        super(RepeatingPipeline, self).__init__(self, tasks)
         self._controller = controller
-        self._initialisers = initialisers
-        self._finalisers = finalisers
-        Pipeline.__init__(self, tasks)
-
-    def _validate(self):
-        for task in self._initialisers + self._tasks + self._finalisers:
-            if not callable(task):
-                raise TypeError("Task: %s is not callable" % str(task))
+        self._initialisers = initialisers[:]
+        self._finalisers = finalisers[:]
+        self._validate(self._initialisers)
+        self._validate(self._finalisers)
 
     def execute(self, message=None):
         runner = RepeatingPipelineRunner(self._controller, \
@@ -122,16 +117,17 @@ if __name__ == "__main__":
 
     import task
     class MyStr(task.Task):
-        def __call__(self, message, pipe):
+        def process(self, message, pipe):
             return str(message)
 
     class MyInt(task.Task):
-        def __call__(self, message, pipe):
+        def process(self, message, pipe):
             return int(message)
 
-    def double(message, pipe):
-        return message * 2
+    class Double(task.Task):
+        def process(self, message, pipe):
+            return message * 2
 
-    p = Pipeline([MyStr(), MyInt(), double])
-    p.add_task_after(double, double)
+    p = Pipeline([MyStr(), MyInt(), Double()])
+    p.add_task_after(Double(), Double)
     assert p.execute(1) == 4

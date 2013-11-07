@@ -4,7 +4,7 @@ class Task(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def __call__(self, message, pipeline):
+    def process(self, message, pipeline):
         raise NotImplementedError
 
 
@@ -14,7 +14,7 @@ class AsyncTask(Task):
     _async_flag = True
 
     @abc.abstractmethod
-    def __call__(self, message, pipeline, callback):
+    def process(self, message, pipeline, callback):
         raise NotImplementedError
 
 
