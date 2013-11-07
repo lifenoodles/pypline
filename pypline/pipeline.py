@@ -64,7 +64,7 @@ class RepeatingPipelineRunner(PipelineRunner):
 
     def run(self, message):
         self.message = self.execute(message, self._initialisers)
-        while not self._controller(self.message):
+        while not self._controller.process(self.message, self._tasks):
             self.message = self.execute(self.message, self._tasks)
         self.message = self.execute(self.message, self._finalisers)
         return self.message
@@ -97,7 +97,7 @@ class Pipeline(ModifiableMixin):
 class RepeatingPipeline(Pipeline):
     def __init__(self, controller=None,
                 initialisers=[], tasks=[], finalisers=[]):
-        super(RepeatingPipeline, self).__init__(self, tasks)
+        super(RepeatingPipeline, self).__init__(tasks)
         self._controller = controller
         self._initialisers = initialisers[:]
         self._finalisers = finalisers[:]
