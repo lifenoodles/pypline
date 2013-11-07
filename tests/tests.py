@@ -96,6 +96,7 @@ class TestPipelineBuilder(unittest.TestCase):
         self.assertTrue(p.execute(""), "TASK INIT\n" \
             "TASK 1\nTASK 2\nTASK 1\nTASK 2\nTASK FINAL\n")
 
+
 class TestPipeLineManager(unittest.TestCase):
     def test_create(self):
         manager = pypline.PipeLineManager()
