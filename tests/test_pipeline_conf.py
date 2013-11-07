@@ -1,5 +1,5 @@
 modules = [
-    "test_modules.py"
+    "../tests/test_modules.py"
 ]
 pipelines = [
     {
@@ -12,10 +12,10 @@ pipelines = [
         },
         "initialisers": [
             {
-                "name": "TestInitialiser",
+                "name": "TestTask",
                 "params": [
-                    "PASS 1",
-                    "PASS 2"
+                    "INIT 1",
+                    "INIT 2"
                 ]
             }
         ],
@@ -23,24 +23,24 @@ pipelines = [
             {
                 "name": "TestTask",
                 "params": [
-                    "FIRST",
-                    "I"
+                    "TASK 1",
+                    "TASK 2"
                 ]
             },
             {
                 "name": "TestTask",
                 "params": [
-                    "SECOND",
-                    "II"
+                    "TASK 3",
+                    "TASK 4"
                 ]
             }
         ],
         "finalisers": [
             {
-                "name": "TestFinaliser",
+                "name": "TestTask",
                 "params": [
-                    "PASS 1",
-                    "PASS 2"
+                    "FINAL 1",
+                    "FINAL 2"
                 ]
             }
         ]
