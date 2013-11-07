@@ -94,6 +94,10 @@ class Pipeline(ModifiableMixin):
         return runner.run(message)
 
 
+class AsyncPipeline(Pipeline, AsyncMixin):
+    pass
+
+
 class RepeatingPipeline(Pipeline):
     def __init__(self, controller=None,
                 initialisers=[], tasks=[], finalisers=[]):
@@ -109,6 +113,9 @@ class RepeatingPipeline(Pipeline):
                     self._initialisers[:], self._tasks[:], \
                     self._finalisers[:])
         return runner.run(message)
+
+class AsyncRepeatingPipeline(RepeatingPipeline, AsyncMixin):
+    pass
 
 
 if __name__ == "__main__":
