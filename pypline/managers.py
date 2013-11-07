@@ -104,51 +104,39 @@ class PipelineFactory(object):
 
 class PipeLineManager(object):
     def __init__(self, pipelines=[]):
+        self.error_handler = None
         self._pipelines = []
-        self.pipeline_defs = []
-        self.task_builders = collections.defaultdict(list)
-        self.controller_builders = collections.defaultdict(list)
+        self._pipeline_builders = {}
+        self._configurations = collections.defaultdict(list)
 
-    def _validate_task_key(self, key):
-        if not self.task_builders.has_key(key):
-            raise NoRegisteredBuilderException("No registered "
-                    "builder with the name: %s" % key)
-
-    def add_pipeline(self, pipeline):
+    def register_pipeline(self, pipeline):
         self._pipelines.append(pipeline)
         return self
 
-    def register_task(self, builder):
-        builder_name = extract_class(builder)
-        self.task_builders[builder_name] = builder
+    def register_pipeline_builder(self, builder):
+        self._pipeline_builders[builder.name] = builder
         return self
 
-    def register_arguments(self, task_name, *args):
-        self._validate_task_key(task_name)
-        for arg in args:
-            self.task_builders.append(arg)
+    def register_configuration(self, name, config):
+        self._configurations[name].append(config)
         return self
 
-    def register_controller(self, builder):
-        builder_name = str(builder).split('.')[-1]
-        self.task_builders[builder_name] = builder
-        return self
+    def generate_pipelines(self):
+        for builder in self._pipeline_builders:
+            for config in self._configurations[builder.name]:
+                self._pipelines.append(builder.build(config))
 
-    def build_pipeline(self, *args):
-        """
-        Builds a pipeline given a list of tuples of the form:
-        (builder, argument list)
-        """
-        builders = []
-        for i, (builder, arguments) in enumerate(args):
-            self._validate_task_key(builder)
-            builders.append(self.task_builders[builder](*arguments))
+    def clear(self):
+        self._pipelines = []
+        self._pipeline_builders.clear()
+        self._configurations.clear()
 
-
-        pipe = pipeline.Pipeline(builders)
-        self._pipelines.append(pipe)
-        # return self or pipe here?
-        return pipe
-
-
-
+    def execute(self, init=None):
+        for pipeline in self._pipelines:
+            if self.error_handler is None:
+                pipeline.execute(init)
+        else:
+            try:
+                pipeline.execute(init)
+            except Exception, e:
+                self.error_handler(e)
