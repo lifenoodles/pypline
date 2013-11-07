@@ -1,3 +1,6 @@
+import pipeline
+
+
 class NoRegisteredBuilderException(Exception): pass
 
 
@@ -54,6 +57,6 @@ class PipeLineManager(object):
         pipe = pipeline.Pipeline(builders)
         self._pipelines.append(pipe)
         # return self or pipe here?
-        return self
+        return pipe
 
 
