@@ -11,6 +11,13 @@ def extract_class(cls):
     return match.groups()[0]
 
 
+def class_and_name(cls):
+    if type(cls) == types.TupleType:
+        return cls
+    else:
+        return (cls, extract_class(cls))
+
+
 class NoRegisteredBuilderException(Exception): pass
 
 
@@ -32,12 +39,9 @@ class PipelineBuilder(object):
         self._task_builders = []
         self._task_names = []
         for task in task_builders:
-            if type(task) == types.TupleType:
-                self._task_builders.append(task[0])
-                self._task_names.append(task[1])
-            else:
-                self._task_builders.append(task)
-                self._task_names.append(extract_class(task))
+            builder, builder_name = class_and_name(task)
+            self._task_builders.append(builder)
+            self._task_names.append(builder_name)
 
     def build(self, configuration):
         tasklist = []
@@ -47,13 +51,47 @@ class PipelineBuilder(object):
         return pipeline.Pipeline(tasklist)
 
 
-class RepeatingPipelineDefinition(object):
-    def __init__(self, name, controller, initialisers, tasks, finalisers):
-        self.name = name
-        self.controller = controller
-        self.initialiser_builders = initialisers[:]
-        self.task_builders = tasks[:]
-        self.finaliser_builders = finalisers[:]
+class RepeatingPipelineBuilder(PipelineBuilder):
+    def __init__(self, name, controller_builder=None, \
+            initialiser_builders=[], task_builders=[], \
+            finaliser_builders=[]):
+        super(RepeatingPipelineBuilder, self).__init__(name, task_builders)
+        self._controller_builder, self._controller_name =  \
+                class_and_name(controller_builder)
+        self._init_builders = []
+        self._init_names = []
+        self._final_builders = []
+        self._final_names = []
+
+        for task in initialiser_builders:
+            builder, builder_name = class_and_name(task)
+            self._init_builders.append(builder)
+            self._init_names.append(builder_name)
+
+        for task in finaliser_builders:
+            builder, builder_name = class_and_name(task)
+            self._final_builders.append(builder)
+            self._final_names.append(builder_name)
+
+    def build(self, configuration):
+        initialisers, tasklist, finalisers = [], [], []
+        controller = self._controller_builder( \
+                *configuration[self._controller_name])
+
+        for task, key in zip(self._init_builders, self._init_names):
+            args = configuration[key]
+            initialisers.append(task(*args))
+
+        for task, key in zip(self._task_builders, self._task_names):
+            args = configuration[key]
+            tasklist.append(task(*args))
+
+        for task, key in zip(self._final_builders, self._final_names):
+            args = configuration[key]
+            finalisers.append(task(*args))
+
+        return pipeline.RepeatingPipeline(controller, \
+                initialisers, tasklist, finalisers)
 
 
 class PipelineFactory(object):

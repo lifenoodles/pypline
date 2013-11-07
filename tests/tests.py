@@ -72,7 +72,7 @@ class TestPipeLine(unittest.TestCase):
 
 
 class TestPipelineBuilder(unittest.TestCase):
-    def test_empty(self):
+    def test_normal(self):
         b = managers.PipelineBuilder("SamplePipe", \
                 [(GenericTask, "task1"), GenericTask])
         conf = managers.PipelineConfiguration(("GenericTask", 2))
@@ -80,6 +80,21 @@ class TestPipelineBuilder(unittest.TestCase):
         p = b.build(conf)
         self.assertTrue(p.execute("") == "TASK 1\nTASK 2\n")
 
+    def test_repeating(self):
+        b = managers.RepeatingPipelineBuilder("SamplePipe", \
+            (ControllerN, "controller"),
+            [(GenericTask, "init")],
+            [(GenericTask, "task1"), (GenericTask, "task2")],
+            [(GenericTask, "final")])
+        conf = managers.PipelineConfiguration()
+        conf["controller"] = 2
+        conf["init"] = "INIT"
+        conf["task1"] = 1
+        conf["task2"] = 2
+        conf["final"] = "FINAL"
+        p = b.build(conf)
+        self.assertTrue(p.execute(""), "TASK INIT\n" \
+            "TASK 1\nTASK 2\nTASK 1\nTASK 2\nTASK FINAL\n")
 
 class TestPipeLineManager(unittest.TestCase):
     def test_create(self):
