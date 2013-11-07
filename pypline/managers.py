@@ -53,7 +53,6 @@ class PipeLineManager(object):
 
     def register_task(self, builder):
         builder_name = self._extract_class(builder)
-        print builder_name
         self.task_builders[builder_name] = builder
         return self
 
