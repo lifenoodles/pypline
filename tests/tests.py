@@ -97,9 +97,21 @@ class TestPipelineBuilder(unittest.TestCase):
 class TestPipeLineManager(unittest.TestCase):
     def test_create(self):
         manager = pypline.PipeLineManager()
-        manager.register_task(GenericTask)
-        p = manager.build_pipeline(("GenericTask", [1]), ("GenericTask", [2]))
-        self.assertTrue(p.execute("") == "TASK 1\nTASK 2\n")
+        b = managers.PipelineBuilder(
+            "SamplePipe",
+            [Initialiser, (GenericTask, "task1"), (GenericTask, "task2")])
+        conf_1 = managers.PipelineConfiguration()
+        conf_1["task1"] = "C1T1"
+        conf_1["task2"] = "C1T2"
+        conf_2 = managers.PipelineConfiguration(("task1", "C2T1"), ("task2", "C2T2"))
+        manager.register_pipeline_builder(b).register_configuration(
+            "SamplePipe", conf_1).register_configuration(
+            "SamplePipe", conf_2).generate_pipelines()
+        result = ""
+        for p in manager._pipelines:
+            result += p.execute()
+        self.assertTrue(result ==
+                        "INIT\nTASK C1T1\nTASK C1T2\nINIT\nTASK C2T1\nTASK C2T2\n")
 
 
 if __name__ == "__main__":
