@@ -29,7 +29,7 @@ class PipelineConfiguration(collections.defaultdict):
             self[k] = v
 
     def __setitem__(self, k, v):
-        if isinstance(v, types.ListType):
+        if not isinstance(v, types.ListType):
             v = [v]
         super(PipelineConfiguration, self).__setitem__(k, v)
 
