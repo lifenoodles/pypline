@@ -91,8 +91,8 @@ class RepeatingPipelineBuilder(PipelineBuilder):
             args = configuration[key]
             finalisers.append(task(*args))
 
-        return pipeline.RepeatingPipeline(controller,
-                                          initialisers, tasklist, finalisers)
+        return pipeline.RepeatingPipeline(
+            controller, initialisers, tasklist, finalisers)
 
 
 class PipelineFactory(object):
@@ -123,9 +123,10 @@ class PipeLineManager(object):
         return self
 
     def generate_pipelines(self):
-        for builder in self._pipeline_builders:
+        for builder in self._pipeline_builders.values():
             for config in self._configurations[builder.name]:
                 self._pipelines.append(builder.build(config))
+        return self
 
     def clear(self):
         self._pipelines = []
