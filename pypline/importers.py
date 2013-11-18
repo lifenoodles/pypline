@@ -16,6 +16,7 @@ def import_file(filename):
 
 class TaskImporter(object):
     __metaclass__ = abc.ABCMeta
+
     def __init__(self):
         self.tasks = {}
 
@@ -33,7 +34,7 @@ class ModuleTaskImporter(TaskImporter):
         classes = inspect.getmembers(module, inspect.isclass)
         for name, cls in classes:
             if hasattr(cls, "process"):
-                if self.tasks.has_key(name):
+                if name in self.tasks:
                     raise KeyError("Task %s defined in multiple modules!" % name)
                 self.tasks[name] = cls
         return self
@@ -76,19 +77,16 @@ class PythonManagerBuilder(ManagerBuilder):
         for final in spec["finalisers"]:
             finalisers.append(process_task(final))
 
-        builder = managers.RepeatingPipelineBuilder(pipe_name, controller, \
-                initialisers, main_tasks, finalisers)
+        builder = managers.RepeatingPipelineBuilder(
+            pipe_name, controller, initialisers, main_tasks, finalisers)
 
         configs = []
-        print parameter_names
-        print parameter_lists
-
         config_combos = [c for c in itertools.product(*parameter_lists)]
-        print config_combos
         for combo in config_combos:
             config = managers.PipelineConfiguration()
             for name, c in zip(parameter_names, combo):
                 config[name] = c
+            print config
         return (builder, configs)
 
     def build_pipeline(self, spec):
@@ -104,12 +102,12 @@ class PythonManagerBuilder(ManagerBuilder):
 
         manager = managers.PipeLineManager()
         for pipe in spec.pipelines:
-            if pipe.has_key("controller"):
-                pipe_builder, configs = self.build_repeating(pipe, \
-                        importer.tasks)
+            if "controller" in pipe:
+                pipe_builder, configs = self.build_repeating(
+                    pipe, importer.tasks)
             else:
-                pipe_builder, configs = self.build_pipeline(pipe, \
-                        importer.tasks)
+                pipe_builder, configs = self.build_pipeline(
+                    pipe, importer.tasks)
             manager.register_pipeline_builder(pipe_builder)
             for conf in configs:
                 manager.register_configuration(pipe_builder.name, conf)

@@ -26,7 +26,7 @@ class ControllerN(pypline.Task):
 
 class GenericTask(pypline.Task):
     def __init__(self, number=0):
-        self.number = number;
+        self.number = number
 
     def process(self, message, pipeline):
         return message + "TASK %s\n" % self.number
@@ -63,26 +63,25 @@ class TestPipeLine(unittest.TestCase):
         self.assertRaises(TypeError, pypline.Pipeline, [1, 2])
 
     def test_repeating(self):
-        p = pypline.RepeatingPipeline(ControllerN(3), \
-                [Initialiser()], \
-                [GenericTask(1), GenericTask(2)], \
-                [Finaliser()])
-        self.assertTrue(p.execute() == "INIT\nTASK 1\nTASK 2\nTASK 1\n" \
-                "TASK 2\nTASK 1\nTASK 2\nFINAL\n")
+        p = pypline.RepeatingPipeline(
+            ControllerN(3), [Initialiser()], [GenericTask(1), GenericTask(2)],
+            [Finaliser()])
+        self.assertTrue(p.execute() == "INIT\nTASK 1\nTASK 2\nTASK 1\n"
+                        "TASK 2\nTASK 1\nTASK 2\nFINAL\n")
 
 
 class TestPipelineBuilder(unittest.TestCase):
     def test_normal(self):
-        b = managers.PipelineBuilder("SamplePipe", \
-                [(GenericTask, "task1"), GenericTask])
+        b = managers.PipelineBuilder(
+            "SamplePipe", [(GenericTask, "task1"), GenericTask])
         conf = managers.PipelineConfiguration(("GenericTask", 2))
         conf["task1"] = [1]
         p = b.build(conf)
         self.assertTrue(p.execute("") == "TASK 1\nTASK 2\n")
 
     def test_repeating(self):
-        b = managers.RepeatingPipelineBuilder("SamplePipe", \
-            (ControllerN, "controller"),
+        b = managers.RepeatingPipelineBuilder(
+            "SamplePipe", (ControllerN, "controller"),
             [Initialiser],
             [(GenericTask, "task1"), (GenericTask, "task2")],
             [Finaliser])
@@ -91,16 +90,15 @@ class TestPipelineBuilder(unittest.TestCase):
         conf["task1"] = 1
         conf["task2"] = 2
         p = b.build(conf)
-        self.assertTrue(p.execute() == "INIT\n" \
-            "TASK 1\nTASK 2\nTASK 1\nTASK 2\nFINAL\n")
+        self.assertTrue(p.execute() == "INIT\n"
+                        "TASK 1\nTASK 2\nTASK 1\nTASK 2\nFINAL\n")
 
 
 class TestPipeLineManager(unittest.TestCase):
     def test_create(self):
         manager = pypline.PipeLineManager()
         manager.register_task(GenericTask)
-        p = manager.build_pipeline(("GenericTask", [1]), \
-                ("GenericTask", [2]))
+        p = manager.build_pipeline(("GenericTask", [1]), ("GenericTask", [2]))
         self.assertTrue(p.execute("") == "TASK 1\nTASK 2\n")
 
 

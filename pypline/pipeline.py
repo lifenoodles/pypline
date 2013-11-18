@@ -3,8 +3,8 @@ import threading
 
 class ModifiableMixin(object):
     def _is_match(self, task, cls):
-        return task == cls or (hasattr(task, "__class__") and
-                    task.__class__ == cls)
+        return task == cls or \
+            (hasattr(task, "__class__") and task.__class__ == cls)
 
     def add_task(self, task):
         self._tasks.append(task)
@@ -23,7 +23,7 @@ class ModifiableMixin(object):
                 return self
 
     def remove_task(self, cls):
-        while  True:
+        while True:
             try:
                 self._tasks.remove(cls)
             except ValueError:
@@ -56,7 +56,7 @@ class PipelineRunner(ModifiableMixin):
 
 class RepeatingPipelineRunner(PipelineRunner):
     def __init__(self, controller, initialisers,
-                tasks, finalisers):
+                 tasks, finalisers):
         super(RepeatingPipelineRunner, self).__init__(tasks)
         self._controller = controller
         self._initialisers = initialisers[:]
@@ -86,8 +86,8 @@ class Pipeline(ModifiableMixin):
     def _validate(self, tasks):
         for task in tasks:
             if not hasattr(task, "process"):
-                raise TypeError("Task: %s has no attribute 'process'" \
-                        % str(task))
+                raise TypeError("Task: %s has no attribute 'process'"
+                                % str(task))
 
     def execute(self, message=None):
         runner = PipelineRunner(self._tasks)
@@ -100,7 +100,7 @@ class AsyncPipeline(Pipeline, AsyncMixin):
 
 class RepeatingPipeline(Pipeline):
     def __init__(self, controller=None,
-                initialisers=[], tasks=[], finalisers=[]):
+                 initialisers=[], tasks=[], finalisers=[]):
         super(RepeatingPipeline, self).__init__(tasks)
         self._controller = controller
         self._initialisers = initialisers[:]
@@ -109,10 +109,11 @@ class RepeatingPipeline(Pipeline):
         self._validate(self._finalisers)
 
     def execute(self, message=None):
-        runner = RepeatingPipelineRunner(self._controller, \
-                    self._initialisers[:], self._tasks[:], \
-                    self._finalisers[:])
+        runner = RepeatingPipelineRunner(
+            self._controller, self._initialisers[:], self._tasks[:],
+            self._finalisers[:])
         return runner.run(message)
+
 
 class AsyncRepeatingPipeline(RepeatingPipeline, AsyncMixin):
     pass
@@ -123,6 +124,7 @@ if __name__ == "__main__":
     doctest.testmod()
 
     import task
+
     class MyStr(task.Task):
         def process(self, message, pipe):
             return str(message)

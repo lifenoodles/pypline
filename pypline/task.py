@@ -1,5 +1,6 @@
 import abc
 
+
 class Task(object):
     __metaclass__ = abc.ABCMeta
 

@@ -7,18 +7,19 @@ import types
 def extract_class(cls):
     match = re.search("__\.(.*)'", str(cls))
     if match is None or len(match.groups()) != 1:
-        raise TypeError ("%s is not a class!" % cls)
+        raise TypeError("%s is not a class!" % cls)
     return match.groups()[0]
 
 
 def class_and_name(cls):
-    if type(cls) == types.TupleType:
+    if isinstance(cls, types.TupleType):
         return cls
     else:
         return (cls, extract_class(cls))
 
 
-class NoRegisteredBuilderException(Exception): pass
+class NoRegisteredBuilderException(Exception):
+    pass
 
 
 class PipelineConfiguration(collections.defaultdict):
@@ -28,7 +29,7 @@ class PipelineConfiguration(collections.defaultdict):
             self[k] = v
 
     def __setitem__(self, k, v):
-        if type(v) != types.ListType:
+        if isinstance(v, types.ListType):
             v = [v]
         super(PipelineConfiguration, self).__setitem__(k, v)
 
@@ -52,12 +53,12 @@ class PipelineBuilder(object):
 
 
 class RepeatingPipelineBuilder(PipelineBuilder):
-    def __init__(self, name, controller_builder=None, \
-            initialiser_builders=[], task_builders=[], \
-            finaliser_builders=[]):
+    def __init__(self, name, controller_builder=None,
+                 initialiser_builders=[], task_builders=[],
+                 finaliser_builders=[]):
         super(RepeatingPipelineBuilder, self).__init__(name, task_builders)
         self._controller_builder, self._controller_name =  \
-                class_and_name(controller_builder)
+            class_and_name(controller_builder)
         self._init_builders = []
         self._init_names = []
         self._final_builders = []
@@ -75,8 +76,8 @@ class RepeatingPipelineBuilder(PipelineBuilder):
 
     def build(self, configuration):
         initialisers, tasklist, finalisers = [], [], []
-        controller = self._controller_builder( \
-                *configuration[self._controller_name])
+        controller = self._controller_builder(
+            *configuration[self._controller_name])
 
         for task, key in zip(self._init_builders, self._init_names):
             args = configuration[key]
@@ -90,8 +91,8 @@ class RepeatingPipelineBuilder(PipelineBuilder):
             args = configuration[key]
             finalisers.append(task(*args))
 
-        return pipeline.RepeatingPipeline(controller, \
-                initialisers, tasklist, finalisers)
+        return pipeline.RepeatingPipeline(controller,
+                                          initialisers, tasklist, finalisers)
 
 
 class PipelineFactory(object):

@@ -108,7 +108,6 @@ if __name__ == "__main__":
     open("logfile", "w").close()
     logger = GaLogger("logfile")
 
-    ga = pypline.RepeatingPipeline(controller,
-            [initialiser],
-            [evaluate, crossover, mutator, logger])
+    ga = pypline.RepeatingPipeline(
+        controller, [initialiser], [evaluate, crossover, mutator, logger])
     ga.execute()
