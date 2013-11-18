@@ -12,6 +12,11 @@ class TestController(pypline.Task):
         return self.count < 0
 
 
+class EmptyInitialiser(pypline.Task):
+    def process(self, message, pipeline):
+        return ""
+
+
 class TestTask(pypline.Task):
     def __init__(self, string):
         self.string = string

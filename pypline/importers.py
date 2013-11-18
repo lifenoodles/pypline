@@ -62,7 +62,9 @@ class PythonManagerBuilder(ManagerBuilder):
                 modified_name = name + str(inc)
                 inc += 1
             task_names.add(modified_name)
-            parameter_lists.append(task["params"])
+            if "params" in task:
+                parameter_lists.append(map(
+                    lambda x: (modified_name, x), task["params"]))
             parameter_names.append(modified_name)
             return (tasks[name], modified_name)
 
@@ -84,9 +86,9 @@ class PythonManagerBuilder(ManagerBuilder):
         config_combos = [c for c in itertools.product(*parameter_lists)]
         for combo in config_combos:
             config = managers.PipelineConfiguration()
-            for name, c in zip(parameter_names, combo):
+            for (name, c) in combo:
                 config[name] = c
-            print config
+            configs.append(config)
         return (builder, configs)
 
     def build_pipeline(self, spec):
@@ -115,3 +117,6 @@ class PythonManagerBuilder(ManagerBuilder):
 
 if __name__ == "__main__":
     x = PythonManagerBuilder().build_manager("../tests/test_pipeline_conf.py")
+    x.generate_pipelines()
+    for p in x._pipelines:
+        print p.execute()

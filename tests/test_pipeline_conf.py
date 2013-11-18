@@ -12,11 +12,7 @@ pipelines = [
         },
         "initialisers": [
             {
-                "name": "TestTask",
-                "params": [
-                    "INIT 1",
-                    "INIT 2"
-                ]
+                "name": "EmptyInitialiser"
             }
         ],
         "tasks": [
