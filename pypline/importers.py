@@ -43,16 +43,9 @@ class ModuleTaskImporter(TaskImporter):
 class ManagerBuilder(object):
     __metaclass__ = abc.ABCMeta
 
-    @abc.abstractmethod
-    def build_manager(self):
-        raise NotImplementedError
-
-
-class PythonManagerBuilder(ManagerBuilder):
     def build_repeating(self, spec, tasks):
         task_names = set()
         parameter_lists = []
-        parameter_names = []
 
         def process_task(task):
             inc = 1
@@ -65,7 +58,6 @@ class PythonManagerBuilder(ManagerBuilder):
             if "params" in task:
                 parameter_lists.append(map(
                     lambda x: (modified_name, x), task["params"]))
-            parameter_names.append(modified_name)
             return (tasks[name], modified_name)
 
         pipe_name = spec["name"]
@@ -92,11 +84,10 @@ class PythonManagerBuilder(ManagerBuilder):
         return (builder, configs)
 
     def build_pipeline(self, spec):
-        pass
+        raise NotImplementedError
 
-    def build_manager(self, filename):
-        spec = import_file(filename)
-        modules = spec.modules
+    def build_manager(self, spec):
+        modules = spec["modules"]
         importer = ModuleTaskImporter()
 
         for module in modules:
@@ -115,8 +106,25 @@ class PythonManagerBuilder(ManagerBuilder):
                 manager.register_configuration(pipe_builder.name, conf)
         return manager
 
+
+class PythonManagerBuilder(ManagerBuilder):
+    def build_manager(self, filename):
+        spec = import_file(filename)
+        return super(PythonManagerBuilder, self).build_manager(spec)
+
+
+class YamlManagerBuilder(ManagerBuilder):
+    def build_manager(self, filename):
+        import yaml
+        spec = {}
+        with open(filename) as f:
+            spec = yaml.load(f)
+        print spec
+        return super(YamlManagerBuilder, self).build_manager(spec)
+
 if __name__ == "__main__":
-    x = PythonManagerBuilder().build_manager("../tests/test_pipeline_conf.py")
+    x = YamlManagerBuilder().build_manager("../tests/test_pipeline_conf.yaml")
+    print x
     x.generate_pipelines()
     for p in x._pipelines:
         print p.execute()
