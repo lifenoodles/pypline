@@ -108,7 +108,7 @@ class TestPipeLineManager(unittest.TestCase):
             "SamplePipe", conf_1).register_configuration(
             "SamplePipe", conf_2).generate_pipelines()
         result = ""
-        for p in manager._pipelines:
+        for p in manager.pipelines:
             result += p.execute()
         self.assertTrue(result ==
                         "INIT\nTASK C1T1\nTASK C1T2\nINIT\nTASK C2T1\nTASK C2T2\n")
