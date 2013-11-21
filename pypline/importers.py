@@ -43,7 +43,7 @@ class ModuleTaskImporter(TaskImporter):
 class ManagerBuilder(object):
     __metaclass__ = abc.ABCMeta
 
-    def build_repeating(self, spec, tasks):
+    def build_repeating(self, pipe_spec, tasks):
         task_names = set()
         parameter_lists = []
 
@@ -60,15 +60,15 @@ class ManagerBuilder(object):
                     lambda x: (modified_name, x), task["params"]))
             return (tasks[name], modified_name)
 
-        pipe_name = spec["name"]
-        controller = process_task(spec["controller"])
+        pipe_name = pipe_spec["name"]
+        controller = process_task(pipe_spec["controller"])
         initialisers, main_tasks, finalisers = [], [], []
 
-        for init in spec["initialisers"]:
+        for init in pipe_spec["initialisers"]:
             initialisers.append(process_task(init))
-        for task in spec["tasks"]:
+        for task in pipe_spec["tasks"]:
             main_tasks.append(process_task(task))
-        for final in spec["finalisers"]:
+        for final in pipe_spec["finalisers"]:
             finalisers.append(process_task(final))
 
         builder = managers.RepeatingPipelineBuilder(
@@ -94,7 +94,7 @@ class ManagerBuilder(object):
             importer.import_tasks(module)
 
         manager = managers.PipeLineManager()
-        for pipe in spec.pipelines:
+        for pipe in spec["pipelines"]:
             if "controller" in pipe:
                 pipe_builder, configs = self.build_repeating(
                     pipe, importer.tasks)
@@ -109,8 +109,8 @@ class ManagerBuilder(object):
 
 class PythonManagerBuilder(ManagerBuilder):
     def build_manager(self, filename):
-        spec = import_file(filename)
-        return super(PythonManagerBuilder, self).build_manager(spec)
+        spec_module = import_file(filename)
+        return super(PythonManagerBuilder, self).build_manager(spec_module.spec)
 
 
 class YamlManagerBuilder(ManagerBuilder):
@@ -119,12 +119,10 @@ class YamlManagerBuilder(ManagerBuilder):
         spec = {}
         with open(filename) as f:
             spec = yaml.load(f)
-        print spec
         return super(YamlManagerBuilder, self).build_manager(spec)
 
 if __name__ == "__main__":
     x = YamlManagerBuilder().build_manager("../tests/test_pipeline_conf.yaml")
-    print x
     x.generate_pipelines()
-    for p in x._pipelines:
+    for p in x.pipelines:
         print p.execute()

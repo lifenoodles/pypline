@@ -106,12 +106,12 @@ class PipelineFactory(object):
 class PipeLineManager(object):
     def __init__(self, pipelines=[]):
         self.error_handler = None
-        self._pipelines = []
+        self.pipelines = []
         self._pipeline_builders = {}
         self._configurations = collections.defaultdict(list)
 
     def register_pipeline(self, pipeline):
-        self._pipelines.append(pipeline)
+        self.pipelines.append(pipeline)
         return self
 
     def register_pipeline_builder(self, builder):
@@ -125,16 +125,16 @@ class PipeLineManager(object):
     def generate_pipelines(self):
         for builder in self._pipeline_builders.values():
             for config in self._configurations[builder.name]:
-                self._pipelines.append(builder.build(config))
+                self.pipelines.append(builder.build(config))
         return self
 
     def clear(self):
-        self._pipelines = []
+        self.pipelines = []
         self._pipeline_builders.clear()
         self._configurations.clear()
 
     def execute(self, init=None):
-        for pipeline in self._pipelines:
+        for pipeline in self.pipelines:
             if self.error_handler is None:
                 pipeline.execute(init)
         else:
