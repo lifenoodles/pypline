@@ -11,6 +11,6 @@ from importers import PythonManagerBuilder
 from importers import YamlManagerBuilder
 
 __all__ = ["Pipeline", "AsyncPipeline", "RepeatingPipeline",
-        "AsyncRepeatingPipeline", "Task", "AsyncTask",
-        "PipelineBuilder", "RepeatingPipelineBuilder", "PipeLineManager",
-        "PythonManagerBuilder", "YamlManagerBuilder"]
+           "AsyncRepeatingPipeline", "Task", "AsyncTask",
+           "PipelineBuilder", "RepeatingPipelineBuilder", "PipeLineManager",
+           "PythonManagerBuilder", "YamlManagerBuilder"]
