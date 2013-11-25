@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='Pypline',
-    version='0.1.0',
+    version='0.1.1',
     author='Donagh Hatton',
     author_email='donaghhatton@gmail.com',
     packages=['pypline'],
