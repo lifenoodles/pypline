@@ -137,8 +137,8 @@ class PipeLineManager(object):
         for pipeline in self.pipelines:
             if self.error_handler is None:
                 pipeline.execute(init)
-        else:
-            try:
-                pipeline.execute(init)
-            except Exception, e:
-                self.error_handler(e)
+            else:
+                try:
+                    pipeline.execute(init)
+                except Exception, e:
+                    self.error_handler(e)
