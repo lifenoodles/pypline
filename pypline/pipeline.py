@@ -64,8 +64,10 @@ class RepeatingPipelineRunner(PipelineRunner):
 
     def run(self, message):
         self.message = self.execute(message, self._initialisers)
-        while not self._controller.process(self.message, self._tasks):
+        while True:
             self.message = self.execute(self.message, self._tasks)
+            if self._controller.process(self.message, self._tasks):
+                break
         self.message = self.execute(self.message, self._finalisers)
         return self.message
 
