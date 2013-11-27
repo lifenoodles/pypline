@@ -1,3 +1,6 @@
 *.pyc
 *sublime-project
 *sublime-workspace
+dist/
+MANIFEST
+
