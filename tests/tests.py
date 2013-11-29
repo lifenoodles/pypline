@@ -1,6 +1,6 @@
 import unittest
 import sys
-sys.path.append("..")
+sys.path.insert(0, "..")
 import pypline
 from pypline import managers
 
@@ -22,6 +22,19 @@ class ControllerN(pypline.Task):
     def process(self, message, pipeline):
         self.n -= 1
         return self.n <= 0
+
+
+@pypline.provides("a")
+class TaskA(pypline.Task):
+    def process(self, message, pipeline):
+        return "A"
+
+
+@pypline.provides("b")
+@pypline.requires("a")
+class TaskB(pypline.Task):
+    def process(self, message, pipeline):
+        return "B"
 
 
 class GenericTask(pypline.Task):
@@ -68,6 +81,14 @@ class TestPipeLine(unittest.TestCase):
             [Finaliser()])
         self.assertTrue(p.execute() == "INIT\nTASK 1\nTASK 2\nTASK 1\n"
                         "TASK 2\nTASK 1\nTASK 2\nFINAL\n")
+
+    def test_requires_inorder(self):
+        p = pypline.Pipeline([TaskA(), TaskB()])
+        self.assertTrue(p.execute() == "B")
+
+    def test_requires_outorder(self):
+        p = pypline.Pipeline([TaskB(), TaskA()])
+        self.assertRaises(pypline.DependencyError, p.execute)
 
 
 class TestPipelineBuilder(unittest.TestCase):
