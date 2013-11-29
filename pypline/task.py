@@ -1,14 +1,22 @@
 import abc
 
 
-def requires(cls, *args):
-    cls.requires = args
-    return cls
+class requires:
+    def __init__(self, *args):
+        self.args = args
+
+    def __call__(self, cls):
+        cls.requires = self.args
+        return cls
 
 
-def provides(cls, *args):
-    cls.provides = args
-    return cls
+class provides:
+    def __init__(self, *args):
+        self.args = args
+
+    def __call__(self, cls):
+        cls.provides = self.args
+        return cls
 
 
 class Task(object):
