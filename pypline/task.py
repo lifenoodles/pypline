@@ -1,8 +1,20 @@
 import abc
 
 
+def requires(cls, *args):
+    cls.requires = args
+    return cls
+
+
+def provides(cls, *args):
+    cls.provides = args
+    return cls
+
+
 class Task(object):
     __metaclass__ = abc.ABCMeta
+    requires = []
+    provides = []
 
     @abc.abstractmethod
     def process(self, message, pipeline):
@@ -10,13 +22,8 @@ class Task(object):
 
 
 class AsyncTask(Task):
-    __metaclass__ = abc.ABCMeta
     # this makes me feel dirty
     _async_flag = True
-
-    @abc.abstractmethod
-    def process(self, message, pipeline, callback):
-        raise NotImplementedError
 
 
 class ParameterisedMixin(object):
@@ -25,35 +32,3 @@ class ParameterisedMixin(object):
     @abc.abstractmethod
     def parameter_list(self):
         raise NotImplementedError
-
-
-class BundleMixin(object):
-    __metaclass__ = abc.ABCMeta
-
-    def requires(self):
-        return []
-
-    def provides(self):
-        return []
-
-
-class Parameter(object):
-    """
-    >>> Parameter(int, "Name").is_ok(2)
-    True
-    >>> Parameter(str, "Name").is_ok(3)
-    False
-    >>> Parameter(float, "Name").is_ok(2.2)
-    True
-    """
-    def __init__(self, cls, name):
-        self.cls = cls
-        self.name = name
-
-    def is_ok(self, param):
-        return issubclass(param.__class__, self.cls)
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()

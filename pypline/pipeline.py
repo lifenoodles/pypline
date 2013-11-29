@@ -1,6 +1,10 @@
 import threading
 
 
+class DependencyError(Exception):
+    pass
+
+
 class ModifiableMixin(object):
     def _is_match(self, task, cls):
         return task == cls or \
@@ -86,12 +90,26 @@ class Pipeline(ModifiableMixin):
         self._validate(self._tasks)
 
     def _validate(self, tasks):
+        # check that all tasks are can process
         for task in tasks:
             if not hasattr(task, "process"):
                 raise TypeError("Task: %s has no attribute 'process'"
                                 % str(task))
 
+    def _ensure_provides(self, tasks):
+        provided = set()
+        for task in tasks:
+            if hasattr(task, "provides"):
+                provided.update(task.provides)
+            if hasattr(task, "requires"):
+                for req in task.requires:
+                    if req not in provided:
+                        raise DependencyError(
+                            "Task %s requires that '%s' should be provided." %
+                            (task.__class__.__name__, req))
+
     def execute(self, message=None):
+        self._ensure_provides(self._tasks)
         runner = PipelineRunner(self._tasks)
         return runner.run(message)
 
@@ -111,6 +129,8 @@ class RepeatingPipeline(Pipeline):
         self._validate(self._finalisers)
 
     def execute(self, message=None):
+        self._ensure_provides(
+            self._initialisers + self._tasks + self._finalisers)
         runner = RepeatingPipelineRunner(
             self._controller, self._initialisers[:], self._tasks[:],
             self._finalisers[:])
