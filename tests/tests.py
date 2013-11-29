@@ -21,7 +21,7 @@ class ControllerN(pypline.Task):
 
     def process(self, message, pipeline):
         self.n -= 1
-        return self.n < 0
+        return self.n <= 0
 
 
 class GenericTask(pypline.Task):
