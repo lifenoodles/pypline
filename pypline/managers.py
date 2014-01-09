@@ -104,9 +104,10 @@ class PipelineFactory(object):
 
 
 class PipeLineManager(object):
-    def __init__(self, pipelines=[]):
+    def __init__(self, pipelines=[], run_count=1):
         self.error_handler = None
         self.pipelines = []
+        self.run_count = run_count
         self._pipeline_builders = {}
         self._configurations = collections.defaultdict(list)
 
@@ -134,11 +135,12 @@ class PipeLineManager(object):
         self._configurations.clear()
 
     def execute(self, init=None):
-        for pipeline in self.pipelines:
-            if self.error_handler is None:
-                pipeline.execute(init)
-            else:
-                try:
+        for run in xrange(self.run_count):
+            for pipeline in self.pipelines:
+                if self.error_handler is None:
                     pipeline.execute(init)
-                except Exception, e:
-                    self.error_handler(e)
+                else:
+                    try:
+                        pipeline.execute(init)
+                    except Exception, e:
+                        self.error_handler(e)

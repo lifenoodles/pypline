@@ -61,6 +61,7 @@ class ManagerBuilder(object):
             return (tasks[name], modified_name)
 
         pipe_name = pipe_spec["name"]
+        run_count = pipe_spec["runs"]
         controller = process_task(pipe_spec["controller"])
         initialisers, main_tasks, finalisers = [], [], []
 
