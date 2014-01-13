@@ -1,10 +1,11 @@
 modules: [../tests/test_modules.py]
+runs: 2
 pipelines:
   - name: TestPipeline
     controller:
       name: TestController
       params:
-        - 3
+        - 1
     initialisers:
       - name: EmptyInitialiser
     tasks:

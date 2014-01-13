@@ -105,6 +105,7 @@ class PipelineFactory(object):
 
 class PipeLineManager(object):
     def __init__(self, pipelines=[], run_count=1):
+        self.run_count = run_count
         self.error_handler = None
         self.pipelines = []
         self.run_count = run_count

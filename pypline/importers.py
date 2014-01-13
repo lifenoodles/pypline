@@ -61,7 +61,6 @@ class ManagerBuilder(object):
             return (tasks[name], modified_name)
 
         pipe_name = pipe_spec["name"]
-        run_count = pipe_spec["runs"]
         controller = process_task(pipe_spec["controller"])
         initialisers, main_tasks, finalisers = [], [], []
 
@@ -89,12 +88,13 @@ class ManagerBuilder(object):
 
     def build_manager(self, spec):
         modules = spec["modules"]
+        run_count = spec["runs"]
         importer = ModuleTaskImporter()
 
         for module in modules:
             importer.import_tasks(module)
 
-        manager = managers.PipeLineManager()
+        manager = managers.PipeLineManager(run_count=int(run_count))
         for pipe in spec["pipelines"]:
             if "controller" in pipe:
                 pipe_builder, configs = self.build_repeating(
