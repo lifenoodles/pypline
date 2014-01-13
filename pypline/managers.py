@@ -108,7 +108,6 @@ class PipeLineManager(object):
         self.run_count = run_count
         self.error_handler = None
         self.pipelines = []
-        self.run_count = run_count
         self._pipeline_builders = {}
         self._configurations = collections.defaultdict(list)
 
@@ -135,9 +134,13 @@ class PipeLineManager(object):
         self._pipeline_builders.clear()
         self._configurations.clear()
 
-    def execute(self, init=None):
-        for run in xrange(self.run_count):
-            for pipeline in self.pipelines:
+    def execute(self, init=None, verbose=False):
+        for p, pipeline in enumerate(self.pipelines):
+            if verbose:
+                print "Starting pipeline %i" % (p + 1)
+            for run in xrange(self.run_count):
+                if verbose:
+                    print "Run %i" % (run + 1)
                 if self.error_handler is None:
                     pipeline.execute(init)
                 else:

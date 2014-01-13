@@ -125,5 +125,4 @@ class YamlManagerBuilder(ManagerBuilder):
 if __name__ == "__main__":
     x = YamlManagerBuilder().build_manager("../tests/test_pipeline_conf.yaml")
     x.generate_pipelines()
-    for p in x.pipelines:
-        print p.execute()
+    x.execute(verbose=True)
