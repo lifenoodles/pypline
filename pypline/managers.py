@@ -22,6 +22,10 @@ class NoRegisteredBuilderException(Exception):
     pass
 
 
+class BadArgumentCountException(Exception):
+    pass
+
+
 class PipelineConfiguration(collections.defaultdict):
     def __init__(self, *args):
         super(PipelineConfiguration, self).__init__(list)
@@ -79,17 +83,21 @@ class RepeatingPipelineBuilder(PipelineBuilder):
         controller = self._controller_builder(
             *configuration[self._controller_name])
 
-        for task, key in zip(self._init_builders, self._init_names):
-            args = configuration[key]
-            initialisers.append(task(*args))
+        try:
+            for task, key in zip(self._init_builders, self._init_names):
+                args = configuration[key]
+                initialisers.append(task(*args))
 
-        for task, key in zip(self._task_builders, self._task_names):
-            args = configuration[key]
-            tasklist.append(task(*args))
+            for task, key in zip(self._task_builders, self._task_names):
+                args = configuration[key]
+                tasklist.append(task(*args))
 
-        for task, key in zip(self._final_builders, self._final_names):
-            args = configuration[key]
-            finalisers.append(task(*args))
+            for task, key in zip(self._final_builders, self._final_names):
+                args = configuration[key]
+                finalisers.append(task(*args))
+        except:
+            raise BadArgumentCountException(
+                "Incorrect argument passed to {}".format(task))
 
         return pipeline.RepeatingPipeline(
             controller, initialisers, tasklist, finalisers)
